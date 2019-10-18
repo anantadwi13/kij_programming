@@ -192,10 +192,12 @@ def add_roundkey(block, roundkey, inverse=False):
             block[i][j] ^= roundkey[i][j]
 
 
-def plaintext_to_blocks(plaintext):
-    added_plaintext = plaintext + ((16 - len(plaintext) % 16) * b" ")
-    group_plaintext = [added_plaintext[i:i + 16] for i in range(0, len(added_plaintext), 16)]
-    return group_plaintext
+def string_to_group_byte(string):
+    bytes = [ord(char) for char in string]
+    while len(bytes) % 16 > 0:
+        bytes.append(ord("\0"))
+    group = [bytes[i:i + 16] for i in range(0, len(bytes), 16)]
+    return group
 
 
 def block_to_string(block):
@@ -220,7 +222,7 @@ def print_block(block, as_char=False):
     for i in block:
         for j in i:
             if as_char:
-                print(ascii(j), end=" ")
+                print(chr(j), end=" ")
             else:
                 print(hex(j), end=" ")
         print("")
@@ -228,8 +230,7 @@ def print_block(block, as_char=False):
 
 
 def encrypt(plaintext, cipherkey, to_hex=False):
-    plaintext = bytes(plaintext, "utf-8")
-    blocks = plaintext_to_blocks(plaintext)
+    blocks = string_to_group_byte(plaintext)
     cipherkey_matrix = hex_to_matrix(cipherkey)
     round_key = generate_round_keys(cipherkey_matrix)
 
@@ -259,16 +260,14 @@ def encrypt(plaintext, cipherkey, to_hex=False):
 
 
 def decrypt(ciphertext, cipherkey, to_hex=False):
-    ciphertext = bytes(ciphertext, "utf-8")
-    blocks = plaintext_to_blocks(ciphertext)
-    print(blocks)
+    blocks = string_to_group_byte(ciphertext)
     cipherkey_matrix = hex_to_matrix(cipherkey)
     round_key = generate_round_keys(cipherkey_matrix)
 
     plaintext = ""
     first_block = True
     for block in blocks:
-        block_matrix = hex_to_matrix(block)
+        block_matrix = bytes_to_matrix(block)
         add_roundkey(block_matrix, round_key[10])
         for i in range(rounds-1, 0, -1):
             shift_rows(block_matrix, True)
@@ -291,7 +290,7 @@ def decrypt(ciphertext, cipherkey, to_hex=False):
 
 
 if __name__ == '__main__':
-    plaintext = "cobalagicoba    mantapzzzz"
+    plaintext = "cobalagicoba"
 
     cipherkey = 0x0102030405060708090A0B0C0D0E0F10
 
@@ -301,28 +300,3 @@ if __name__ == '__main__':
     print(ciphertext)
     print(ciphertext_hex)
     print(decrypt(ciphertext, cipherkey))
-    0x4300666d991cce39a60f6219233d41e5
-    0x6513c67dab410e6f72ef18997e06297a
-
-
-
-
-    # cipherkey =2b28ab097eaef7cf15d2154f16a6883c
-    # plaintext = 0x328831e0435a3137f6309807a88da234
-    # cipherkey_matrix = hex_to_matrix(cipherkey)
-    # a = hex_to_matrix(plaintext)
-    # round_key = generate_round_keys(cipherkey_matrix)
-    # add_roundkey(a, round_key[0])
-    # print_block(a)
-    # substitute_bytes(a)
-    # print_block(a)
-    # shift_rows(a)
-    # print("zz")
-    # print_block(a)
-    # a = mix_columns(a)
-    # b = mix_columns(a, True)
-    # print_block(a)
-    # print_block(b)
-    # print("zz")
-    # add_roundkey(a, round_key[1])
-    # print_block(a)
